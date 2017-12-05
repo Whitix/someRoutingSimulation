@@ -4,13 +4,13 @@
 #include<list> //Used instead of a stack to get the ideal route path
 #include <limits.h> //For defining infinity to be used with the routing algorithm
 
-std::list<int> findShortestPath(int, int, std::vector<std::vector<double>>);
+std::list<int> findShortestPath(int, int, std::vector< std::vector<double> >);
 
 int main()
 {
 	std::string userInput;
 	std::vector<Router> mesh;  //Holds all of the nodes of the mesh network
-	std::vector<std::vector<double>> meshDistances; //Holds all of the distances between routers (like graph edges)
+	std::vector< std::vector<double> > meshDistances; //Holds all of the distances between routers (like graph edges)
 	int packetSize = 512;  //Size of packets to be used during the simulation
 	int bufferSize = 10; //How many packets a node can hold at once.  This is a small number for observation purporses
 	int tempNum;  //To be used with input
@@ -175,7 +175,7 @@ int main()
 //Does NOT account for queue processing, loss, or overloaded buffers.  Those are dealt with when the path is being executed
 //Input: The mesh network, a starting node, and a destination node
 //Output: A queue outlining the shortest path from A to B
-std::list<int> findShortestPath(int startID, int dest, std::vector<std::vector<double>> adj) 
+std::list<int> findShortestPath(int startID, int dest, std::vector< std::vector<double> > adj) 
 {
 	int adjSize = adj.size();
 	int *map = new int(adj.size()); //Will store the path used to get the shortest distance
