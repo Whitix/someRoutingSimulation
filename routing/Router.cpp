@@ -1,10 +1,14 @@
 #include "Router.h"
 #include<iostream>
 
-//Default constructor in case something goes wrong
+//Default constructor used for null routers
+//Null routers are assigned to every router when a connection does not exist
+//This allows an adjacency matrix to be utilized and it took me too long to realize that
 Router::Router()
 {
 	routerID = -1;
+	physicalLink = INT_MAX; //Use this so that other routers will not try and connect to null routers
+	processingDelay = INT_MAX; //Both of these values should ensure that these routers are never utilized for connections
 }
 
 //Specialized constructor with all of the relevant information supplied (other than connections)
@@ -42,6 +46,13 @@ void Router::printInfo()
 void Router::addConnection(Router newConnection)
 {
 	connections.push_back(newConnection);
+}
+
+void Router::updateConnection(Router newConnection, int dest)
+{
+	connections.insert((connections.begin() + dest), newConnection); //Insert new connection before old connection
+	connections.erase((connections.begin() + dest + 1)); //Delete old connection
+
 }
 
 void Router::setProcessDelay(double newDelay)

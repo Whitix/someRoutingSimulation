@@ -30,6 +30,7 @@ public:
 	std::vector<Router> getConnections(); //Returns a list of the router's connections
 	void printInfo(); //Prints basic variable information so I can debug
 	void addConnection(Router newConnection);  //Adds a new connection to the node
+	void updateConnection(Router newConnection, int dest); //Updates a connection at the destination specified 
 	void setProcessDelay(double newDelay);
 	void setPhysicalLink(double newLength, int packet);
 	void setPropagationSpeed(double newSpeed, int packet);
