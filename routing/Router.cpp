@@ -1,5 +1,6 @@
 #include "Router.h"
-#include<iostream>
+#include<iostream>  //Used for output
+
 
 //Default constructor used for null routers
 //Null routers are assigned to every router when a connection does not exist
@@ -9,6 +10,7 @@ Router::Router()
 	routerID = -1;
 	physicalLink = INT_MAX; //Use this so that other routers will not try and connect to null routers
 	processingDelay = INT_MAX; //Both of these values should ensure that these routers are never utilized for connections
+	isFull = true;
 }
 
 //Specialized constructor with all of the relevant information supplied (other than connections)
@@ -20,6 +22,7 @@ Router::Router(int newID, double bandw, int buffS, double processingD, double lo
 	processingDelay = processingD;
 	lossChance = lossC;
 	physicalLink = physLink;
+	isFull = false;
 }
 //Returns the router ID
 //Input: none
@@ -48,6 +51,9 @@ void Router::addConnection(Router newConnection)
 	connections.push_back(newConnection);
 }
 
+
+//Updates the connections list with the given router
+//Inserts the new router and then deletes the old one (presumably a null router)
 void Router::updateConnection(Router newConnection, int dest)
 {
 	connections.insert((connections.begin() + dest), newConnection); //Insert new connection before old connection
@@ -55,6 +61,16 @@ void Router::updateConnection(Router newConnection, int dest)
 
 }
 
+//Removes a router connection, so that we can temporarily reroute a packet
+//Places a null router at that spot instead
+void Router::removeConnection(int connectionToRemove)
+{
+	Router nullrouter;
+	connections.insert((connections.begin() + connectionToRemove), nullrouter);
+	connections.erase((connections.begin() + connectionToRemove + 1));
+}
+
+//These are all basic set functions, used to change values during the simulation
 void Router::setProcessDelay(double newDelay)
 {
 	processingDelay = newDelay;
@@ -74,6 +90,11 @@ void Router::setLossChance(double newLoss)
 	lossChance = newLoss;
 }
 
+void Router::setBuffer(bool full)
+{
+	isFull = full;
+}
+
 //Calculates the transmission delay based on the packets being sent and bandwidth
 //Input:  The packet size in bytes
 //Output: none
@@ -88,9 +109,19 @@ void Router::calculateTransDelay(int packetSize)
 double Router::timeToReach(Router nextRouter)
 {
 	double propagationDelay = (physicalLink + nextRouter.physicalLink) / propagationSpeed; //Total propagation distance between two routers
-	return (propagationDelay + transmissionDelay + processingDelay);
+	return (propagationDelay + transmissionDelay);
 }
 
+int Router::getBufferSize()
+{
+	return bufferSize;
+}
+
+double Router::getProcessingDelay()
+{
+	return processingDelay;
+}
+//Used for debugging.  Prints out all of the router IDs in the connections list
 bool Router::findNextRouter()
 {
 	if (connections.empty())
@@ -102,4 +133,20 @@ bool Router::findNextRouter()
 	}
 	return true;
 	
+}
+
+bool Router::sendAckOrReq(double& time)
+{
+	time += transmissionDelay;  //Simulates the time it would take for a router to message an adjacent router, adding the transmission delay to the packet's total time
+	double target = ((double)rand()) / (RAND_MAX);  //Generates a random number between 0 and 1 to use as a target
+	if (lossChance <= target)
+	{
+		return false; //Represents the chance that a transmission failed
+	}
+	return true; //Represents the chance that a transmission succeeded
+}
+
+bool Router::isBufferFull ()
+{
+	return isFull;
 }

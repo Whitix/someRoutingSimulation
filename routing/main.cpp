@@ -4,7 +4,7 @@
 #include<list> //Used instead of a stack to get the ideal route path
 #include <limits.h> //For defining infinity to be used with the routing algorithm
 
-std::list<int> findShortestPath(int, int, std::vector<std::vector<double>>);
+std::list<int> findShortestPath(int, int, std::vector<std::vector<double>>, double&);
 
 int main()
 {
@@ -16,9 +16,11 @@ int main()
 	int tempNum;  //To be used with input
 	int tempNum2; //To be used with input.  I know I could resuse, and I'll clean up later
 	double bandwidth = 1500000;  //Bandwidth over the network
-	double randomPacketLoss = .01;  //Chance that a packet may be randomly lost over the network
-	double processingDelay = 0;  //Time it takes to process a request at each router
+	double randomPacketLoss = .05;  //Chance that a packet may be randomly lost over the network
+	double processingDelay = 10;  //Time it takes to process a request at each router
 	double distanceDelay = 0;
+	double totalDelay = 0; //Will be used to track a single packet's total time spent from its starting router to the destination router
+	double totalDelayCopy = 0; //Will be used for the second iteration, so we don't need to run the algorithm again
 
 	std::cout << "This is where we'll simulate the routing algorithm.  First, we need to create a mesh network to test it on."  << std::endl;
 	std::cout << "The default network is configured like the example given in the topics slides.  All of the routers have the same characteristics." << std::endl;
@@ -31,9 +33,9 @@ int main()
 		std::cin >> packetSize;
 		std::cout << "Enter the bandwidth (in bytes) to be used with the network (Default is 1.5 megabytes): ";
 		std::cin >> bandwidth;
-		std::cout << "Enter the percent chance that a packet is randomly lost over the network (default is  1% or .01): ";
+		std::cout << "Enter the percent chance that a packet is randomly lost over the network (default is  5% or .05): ";
 		std::cin >> randomPacketLoss;
-		std::cout << "Enter how long it takes to process a request at the local router (Default is 0 milliseconds): ";
+		std::cout << "Enter how long it takes to process a request at the local router (Default is 100 milliseconds): ";
 		std::cin >> processingDelay;
 		std::cout << "Enter the size of the buffer for each router (Default is 10): ";
 		std::cin >> bufferSize;
@@ -159,12 +161,108 @@ int main()
 	std::cin >> tempNum2;
 	std::cout << "Sending packet..." << std::endl;
 	//std::queue<Router> packetPath = calcShortestPath(mesh, tempNum, tempNum2);
-	std::list<int> packetPath = findShortestPath(tempNum, tempNum2, meshDistances);
-	while (!packetPath.empty()) //Print the packet path of routers
+	std::list<int> packetPath = findShortestPath(tempNum, tempNum2, meshDistances, totalDelay); //We'll print this out to show that the basic routing worked
+	std::list<int> packetPathCopy = packetPath;  //We'll use this in the next stage, where we test the routing algorithm with full routers
+	std::cout << "Here's the router path the packet will take starting from router " << tempNum <<std::endl;
+	totalDelayCopy = totalDelay;
+	//Print the packet path of routers
+	//Also, updates the total time that the packet spends inbetween each router
+	//Packet has a chance to be lost based on the packet loss chance
+	while (!packetPath.empty()) 
 	{
-		std::cout << packetPath.front() << std::endl;
-		packetPath.pop_front();
+		std::cout <<"Router "<< packetPath.front() << std::endl; //Print router
+		while (true)//This is where the losses will be calculated; if the packet loss chance is 1, then this will loop forever.
+		{
+			totalDelay += mesh[packetPathCopy.front()].getProcessingDelay();
+			if (mesh[packetPath.front()].sendAckOrReq(totalDelay)) //Represents a request
+			{
+				if (mesh[packetPath.front()].sendAckOrReq(totalDelay)) //Represents an acknowledge
+				{
+					break; //If both transmissions are successful, then we're done and can move on.  Otherwise, we'll need to try again.  Delay time is added each time
+				}
+			}
+		}
+		packetPath.pop_front(); //Pop the front, allowing the next router to be examined
 	}
+	std::cout << "And here is the total time that packet took through the network (in milliseconds): " << totalDelay << std::endl; 
+	std::cout << "Now, let's do the same thing, except this time, some routing buffers can be full." << std::endl;
+	std::cout << "If a packet reaches a full buffer, then it will be lost, requiring it to be re-sent.  Also, some packets may be lost randomly as well." << std::endl;
+	userInput = "";
+	std::cout << "Set a router to have a full buffer? y/n: ";
+	std::cin >> userInput;
+	int fullNum; //We'll use this to determine which routers are full, as designated by the user
+	while (!userInput.compare("y"))
+	{
+		std::cout << "Enter a router number to set as full: ";
+		std::cin >> fullNum;
+		mesh[fullNum].setBuffer(true); //Sets a router to be full and routed around
+		std::cout << "Choose another router to set as full (Too many full routers may cause errors) y/n: ";
+		std::cin >> userInput;
+	}
+	//Alright, let's give this a shot
+	//In this case, if the starting router is full, we'll ignore that.  If the ending router is full, we'll ignore that too.
+	std::cout << "Packet begins at router " << tempNum << std::endl; //Do this in case the routers are directly adjacent to one another
+	int prevNum = -1;  //This represents the previous router, we'll go back to this one in case we need to reroute
+	while (!packetPathCopy.empty())
+	{
+		std::cout << "Moving to router " << packetPathCopy.front() << std::endl;
+		if (mesh[packetPathCopy.front()].isBufferFull()) //Checks to see if the router along the path is full
+		{
+			std::cout << "Router " << packetPathCopy.front() << " is full.  Rerouting around it by going to router " << prevNum << std::endl;
+			//If the router is full, then we'll route around it. To do this, we'll remove it as a connection from its adjacent routers.  Then, we'll try to go around it.
+			//If a router is a bridge, then it may not be possible to go around.  In this case, we'll just need to wait for the buffer to not be full
+			try
+			{
+				int holder = packetPathCopy.front(); //This variable will hold the next router temporarily, so that it may be removed and re-added
+				mesh[tempNum].removeConnection(holder); //The current router, signified by tempNum, removes the next router in the path from its connections
+
+				for (int i = 0; i < mesh.size(); i++)//Loop through the adjacency matrix, removing all connections to this router, so it isn't used
+				{
+					meshDistances[i].insert((meshDistances[i].begin() + holder), INT_MAX); //Update the adjacency matrix as well; this should ensure that the path is not taken when we move to calculate a new path
+					meshDistances[i].erase((meshDistances[i].begin() + holder + 1));
+				}
+
+				if (prevNum == -1) //If there is no previous router, then we must wait for the buffer to be full
+				{
+					std::cout << "Could not reroute packet.  Waiting for buffer instead." << std::endl;
+					totalDelayCopy += (mesh[packetPathCopy.front()].getBufferSize() * mesh[packetPathCopy.front()].getProcessingDelay());
+				}
+				else
+				{
+					packetPathCopy = findShortestPath(prevNum, tempNum2, meshDistances, totalDelayCopy); //If this works, then we'll use this for our new path
+				}
+				
+				mesh[tempNum].updateConnection(mesh[holder], holder); //Re-add the router back to the connections list
+
+				for (int i = 0; i < mesh.size(); i++)//Loop through the adjacency matrix, restoring all connections to this router
+				{
+					meshDistances[i].insert((meshDistances[i].begin() + holder), holder); 
+					meshDistances[i].erase((meshDistances[i].begin() + holder + 1));
+				}
+			}
+			catch (const std::out_of_range)  //An out of range exception signifies that a new path could not be found.  In this case, we'll just wait for the router instead
+			{
+				std::cout << "Could not reroute packet.  Waiting for buffer instead." << std::endl;
+				totalDelayCopy += (mesh[packetPathCopy.front()].getBufferSize() * mesh[packetPathCopy.front()].getProcessingDelay()); 
+				//The delay here is the buffer size of the next router multiplied by the time it takes to process at that router
+			}
+		}
+		while (true)//This is where the losses will be calculated; if the packet loss chance is 1, then this will loop forever.
+		{
+			totalDelayCopy += mesh[packetPathCopy.front()].getProcessingDelay(); //Add the time taken to process the packet to the total delay
+			if (mesh[packetPathCopy.front()].sendAckOrReq(totalDelayCopy)) //Represents a request
+			{
+				if (mesh[packetPathCopy.front()].sendAckOrReq(totalDelayCopy)) //Represents an acknowledge
+				{
+					break; //If both transmissions are successful, then we're done and can move on.  Otherwise, we'll need to try again.  Delay time is added each time
+				}
+			}
+		}
+		prevNum = tempNum; //Set the previous router 
+		tempNum = packetPathCopy.front(); //Update tempNum to hold the current router
+		packetPathCopy.pop_front(); //Pop the front and move on to the next one in the list
+	}
+	std::cout << "Packet reached destination, with a delay of " << totalDelayCopy << " milliseconds." << std::endl;
 	std::cin >> userInput;
 	return 0;
 }
@@ -174,11 +272,11 @@ int main()
 //Calculates the path a packet should take to maxmize throughput based on Dijkstra's algorithm
 //Does NOT account for queue processing, loss, or overloaded buffers.  Those are dealt with when the path is being executed
 //Input: The mesh network, a starting node, and a destination node
-//Output: A queue outlining the shortest path from A to B
-std::list<int> findShortestPath(int startID, int dest, std::vector<std::vector<double>> adj) 
+//Output: A list outlining the shortest path from A to B
+std::list<int> findShortestPath(int startID, int dest, std::vector<std::vector<double>> adj, double& time) 
 {
 	int adjSize = adj.size();
-	int *map = new int(adj.size()); //Will store the path used to get the shortest distance
+	int map[16]; //Will store the path used to get the shortest distance  I kept getting some weird memory error with visual studio when using a dynamically allocated array, so we'll use this instead
 	std::vector<double> dist(adjSize);
 	std::vector<bool> vis(adjSize);
 	std::list<int> finalRoute;
@@ -221,6 +319,6 @@ std::list<int> findShortestPath(int startID, int dest, std::vector<std::vector<d
 		finalRoute.push_front(iterator);  //Pushes the router onto the front (like a stack) to be popped later during the list
 		iterator = map[iterator];
 	}
-	//dist[dest];  //Should contain the path length to this point; used for debugging
+	time += dist[dest];  //Used to track the total time between the packet spends while on its destination path.  Does NOT account for queueing delays
 	return finalRoute;
 }

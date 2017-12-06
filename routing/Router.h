@@ -3,8 +3,9 @@
 
 #include <queue>
 #include <list>
-#include<vector>
+#include<vector> //Used to hold a connections list
 #include "Packet.h"
+#include<random> //Used for to decide if a packet is randomly lost
 class Router{
 
 private:
@@ -16,9 +17,10 @@ private:
 	double physicalLink = 2000;  //Size of the physical (or wireless link) between another router.  This isn't the most accurate way to represent a physical link
 						//but should be sufficient to show the routing algorithm  (in meters)
 	double propagationSpeed = 200000000000;  //Propagation speed (in meters per millisecond)  Default: 2e8 m/s
-	double processingDelay = 0;  //Time it takes to process where to send the packet (in milliseconds) Default: 0s
+	double processingDelay = 10;  //Time it takes to process where to send the packet (in milliseconds) Default: 10ms
 	double transmissionDelay = 0;  //Time it takes to transmit packet data(packet length / link bandwidth) (in milliseconds) Default:0s, although this is calculated later
 	double lossChance = 0;  //This chance is rolled every time a packet is sent or arrives at another router.  If the roll suceeds, then the packet is lost and must be retransmitted
+	bool isFull;
 
 	
 
@@ -31,11 +33,18 @@ public:
 	void printInfo(); //Prints basic variable information so I can debug
 	void addConnection(Router newConnection);  //Adds a new connection to the node
 	void updateConnection(Router newConnection, int dest); //Updates a connection at the destination specified 
+	void removeConnection(int connectionToRemove); //Removes a connection from the list of connections, used for rerouting
 	void setProcessDelay(double newDelay);
 	void setPhysicalLink(double newLength, int packet);
 	void setPropagationSpeed(double newSpeed, int packet);
 	void setLossChance(double newLoss);
+	void setBuffer(bool full); //Sets the buffer to empty or full for testing
 	void calculateTransDelay(int packetSize);  //Calculates the transmission delay based on the packet being transmitted
 	double timeToReach(Router nextRouter);  //Calculates how fast a packet can be sent between this router and the next one
-	bool findNextRouter();  //Searches its own list of connections, placing the router with the shortest throughput time
+	int getBufferSize(); //returns buffer size
+	double getProcessingDelay(); //returns processing delay
+	bool findNextRouter();  //Used for debugging
+	bool sendAckOrReq(double& time); //Used to simulate the process of routers communicating with one another.  Packet loss can occur here (If an ack or request isn't received); also updates the time spent
+	bool isBufferFull(); //Returns whether or not the buffer is full
+
 };
