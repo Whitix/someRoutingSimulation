@@ -3,7 +3,8 @@
 
 #include <queue>
 #include <list>
-#include<vector> //Used to hold a connections list
+#include<vector>
+#include <climits>
 #include "Packet.h"
 #include<random> //Used for to decide if a packet is randomly lost
 class Router{

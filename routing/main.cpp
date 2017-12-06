@@ -10,7 +10,7 @@ int main()
 {
 	std::string userInput;
 	std::vector<Router> mesh;  //Holds all of the nodes of the mesh network
-	std::vector<std::vector<double>> meshDistances; //Holds all of the distances between routers (like graph edges)
+	std::vector< std::vector<double> > meshDistances; //Holds all of the distances between routers (like graph edges)
 	int packetSize = 512;  //Size of packets to be used during the simulation
 	int bufferSize = 10; //How many packets a node can hold at once.  This is a small number for observation purporses
 	int tempNum;  //To be used with input
