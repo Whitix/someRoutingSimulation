@@ -4,7 +4,7 @@
 
 //Default constructor used for null routers
 //Null routers are assigned to every router when a connection does not exist
-//This allows an adjacency matrix to be utilized and it took me too long to realize that
+//This allows an adjacency matrix to be utilized
 Router::Router()
 {
 	routerID = -1;

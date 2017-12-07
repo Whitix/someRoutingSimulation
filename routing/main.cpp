@@ -44,7 +44,7 @@ int main()
 
 	}
 
-	//Builds the mesh network, using the given values to build the routers.  Will probably change this later, as it is a bit messy.
+	//Builds the mesh network, using the given values to build the routers. 
 	//Also, adds in physical link distances for each router.  The physical distance between two routers is the sum of both of their link distances.
 	//The physical link is equal to: (500 + (router's ID * 1000))
 	for (int i = 0; i <= 15; i++)
@@ -107,7 +107,7 @@ int main()
 	mesh[15].updateConnection(mesh[14], 14);
 
 
-	//Allows users to (slowly) edit single nodes to test further
+	//Allows users to edit single nodes to test further
 	userInput = "";
 	std::cout << "Edit individual router characteristics? y/n: ";
 	std::cin >> userInput;
@@ -135,8 +135,6 @@ int main()
 	}
 
 	//Calculate the distance between connections and place them all in an adjaceny matrix
-	//Might take a second to get through 256 connections
-
 	for (int i = 0; i < mesh.size(); i++)
 	{
 		int connSize = (int)mesh[i].getConnections().size();
@@ -147,14 +145,7 @@ int main()
 			meshDistances[i].push_back(distanceDelay);
 		}
 	}
-	//Was used for debugging, but we're good now
-	/*for (int i = 0; i < meshDistances.size(); i++)
-	{
-		std::cout << "Router Adjacencies for router " << i << ":" << std::endl;
-		for (int j = 0; j < meshDistances[i].size(); j++)
-		std::cout << meshDistances[i][j] << std::endl;
-		std::cout << "Size: " << meshDistances[i].size() << std::endl;
-	}*/
+
 	while (tempNum < 0 || tempNum > 15)
 	{
 		std::cout << "Let's send a single packet.  Enter a starting router ID (from 0 to 15): ";
@@ -167,10 +158,6 @@ int main()
 	}
 
 	//The source and destination routers determine whether a router can be routed around.  We'll update those routers here based on tempNum and tempNum2
-	//I'll admit that this is very limiting.  It should work for the simulation, but it is not perfect at this moment
-	//The point is, that the algorithm can reroute, but the limited mesh network we are currently using makes this difficult
-	//For a larger mesh network, then it would be much easier to route around
-	//I hope it is still sufficient to show the dynamic aspect of the algorithm
 	if (tempNum <= 3 || tempNum == 13) //If the source is on the left side of the mesh
 	{
 		mesh[8].setRouteAround(true); //then we can route around these routers
@@ -185,7 +172,6 @@ int main()
 	}
 
 	std::cout << "Sending packet..." << std::endl;
-	//std::queue<Router> packetPath = calcShortestPath(mesh, tempNum, tempNum2);
 	std::list<int> packetPath = findShortestPath(tempNum, tempNum2, meshDistances, totalDelay); //We'll print this out to show that the basic routing worked
 	std::list<int> packetPathCopy = packetPath;  //We'll use this in the next stage, where we test the routing algorithm with full routers
 	std::cout << "Here's the router path the packet will take starting from router " << tempNum <<std::endl;
@@ -232,7 +218,7 @@ int main()
 		std::cout << "Choose another router to set as full (Too many full routers may cause errors) y/n: ";
 		std::cin >> userInput;
 	}
-	//Alright, let's give this a shot
+
 	//In this case, if the starting router is full, we'll ignore that.  If the ending router is full, we'll ignore that too.
 	std::cout << "Packet begins at router " << tempNum << std::endl; //Do this in case the routers are directly adjacent to one another
 	int prevNum = -1;  //This represents the previous router, we'll go back to this one in case we need to reroute
@@ -267,7 +253,7 @@ int main()
 				
 				mesh[tempNum].updateConnection(mesh[holder], holder); //Re-add the router back to the connections list
 
-				for (int i = 0; i < mesh.size(); i++)//Loop through the adjacency matrix, restoring all connections to this router
+				for (int i = 0; i < mesh.size(); i++) //Loop through the adjacency matrix, restoring all connections to this router
 				{
 					meshDistances[i].insert((meshDistances[i].begin() + holder), holder); 
 					meshDistances[i].erase((meshDistances[i].begin() + holder + 1));
@@ -312,13 +298,13 @@ int main()
 
 
 //Calculates the path a packet should take to maxmize throughput based on Dijkstra's algorithm
-//Does NOT account for queue processing, loss, or overloaded buffers.  Those are dealt with when the path is being executed
+//Queue processing, loss, or overloaded buffers are dealt with when the path is being executed
 //Input: The mesh network, a starting node, and a destination node
 //Output: A list outlining the shortest path from A to B
 std::list<int> findShortestPath(int startID, int dest, std::vector< std::vector<double> > adj, double& time) 
 {
 	int adjSize = (int) adj.size();
-	int map[16]; //Will store the path used to get the shortest distance  I kept getting some weird memory error with visual studio when using a dynamically allocated array, so we'll use this instead
+	int map[16]; //Will store the path used to get the shortest distance
 	std::vector<double> dist(adjSize);
 	std::vector<bool> vis(adjSize);
 	std::list<int> finalRoute;
@@ -357,10 +343,9 @@ std::list<int> findShortestPath(int startID, int dest, std::vector< std::vector<
 	int iterator = dest;
 	while (iterator != startID)
 	{
-		//std::cout << "Router " << iterator << std::endl;
 		finalRoute.push_front(iterator);  //Pushes the router onto the front (like a stack) to be popped later during the list
 		iterator = map[iterator];
 	}
-	time += dist[dest];  //Used to track the total time between the packet spends while on its destination path.  Does NOT account for queueing delays
+	time += dist[dest];  //Used to track the total time between the packet spends while on its destination path.  Does not account for queueing delays
 	return finalRoute;
 }
