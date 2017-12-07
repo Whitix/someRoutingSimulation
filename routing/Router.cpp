@@ -10,7 +10,11 @@ Router::Router()
 	routerID = -1;
 	physicalLink = INT_MAX; //Use this so that other routers will not try and connect to null routers
 	processingDelay = INT_MAX; //Both of these values should ensure that these routers are never utilized for connections
+	bandwidth = 1500000;
+	propagationSpeed = 200000000000;
 	isFull = true;
+	transmissionDelay = 0;
+	canRouteAround = false;
 }
 
 //Specialized constructor with all of the relevant information supplied (other than connections)
@@ -23,6 +27,9 @@ Router::Router(int newID, double bandw, int buffS, double processingD, double lo
 	lossChance = lossC;
 	physicalLink = physLink;
 	isFull = false;
+	propagationSpeed = 200000000000;
+	transmissionDelay = 0;
+	canRouteAround = false;
 }
 //Returns the router ID
 //Input: none
@@ -141,12 +148,22 @@ bool Router::sendAckOrReq(double& time)
 	double target = ((double)rand()) / (RAND_MAX);  //Generates a random number between 0 and 1 to use as a target
 	if (lossChance <= target)
 	{
-		return false; //Represents the chance that a transmission failed
+		return true; //Represents the chance that a transmission failed
 	}
-	return true; //Represents the chance that a transmission succeeded
+	return false; //Represents the chance that a transmission succeeded
 }
 
 bool Router::isBufferFull ()
 {
 	return isFull;
+}
+
+bool Router::canGoAround()
+{
+	return canRouteAround;
+}
+
+void Router::setRouteAround(bool bridge)
+{
+	canRouteAround = bridge;
 }

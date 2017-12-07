@@ -4,7 +4,7 @@
 #include<list> //Used instead of a stack to get the ideal route path
 #include <limits.h> //For defining infinity to be used with the routing algorithm
 
-std::list<int> findShortestPath(int, int, std::vector<std::vector<double>>, double&);
+std::list<int> findShortestPath(int, int, std::vector< std::vector<double> >, double&);
 
 int main()
 {
@@ -13,16 +13,17 @@ int main()
 	std::vector< std::vector<double> > meshDistances; //Holds all of the distances between routers (like graph edges)
 	int packetSize = 512;  //Size of packets to be used during the simulation
 	int bufferSize = 10; //How many packets a node can hold at once.  This is a small number for observation purporses
-	int tempNum;  //To be used with input
-	int tempNum2; //To be used with input.  I know I could resuse, and I'll clean up later
+	int tempNum = -1;  //To be used with input
+	int tempNum2 = -1; //To be used with input.  I know I could resuse, and I'll clean up later
 	double bandwidth = 1500000;  //Bandwidth over the network
 	double randomPacketLoss = .05;  //Chance that a packet may be randomly lost over the network
-	double processingDelay = 10;  //Time it takes to process a request at each router
+	double processingDelay = .05;  //Time it takes to process a request at each router
 	double distanceDelay = 0;
 	double totalDelay = 0; //Will be used to track a single packet's total time spent from its starting router to the destination router
 	double totalDelayCopy = 0; //Will be used for the second iteration, so we don't need to run the algorithm again
+	int numberOfLosses = 0; //Indicates when a packet was lost
 
-	std::cout << "This is where we'll simulate the routing algorithm.  First, we need to create a mesh network to test it on."  << std::endl;
+	std::cout << "This is where we'll simulate the routing algorithm.  First, we need to create a mesh network to test it on." << std::endl;
 	std::cout << "The default network is configured like the example given in the topics slides.  All of the routers have the same characteristics." << std::endl;
 	std::cout << "This network contains 16 nodes.  Currently, only the physical link sizes are different." << std::endl;
 	std::cout << "Use default settings for routers and packets? y/n: ";
@@ -35,7 +36,7 @@ int main()
 		std::cin >> bandwidth;
 		std::cout << "Enter the percent chance that a packet is randomly lost over the network (default is  5% or .05): ";
 		std::cin >> randomPacketLoss;
-		std::cout << "Enter how long it takes to process a request at the local router (Default is 100 milliseconds): ";
+		std::cout << "Enter how long it takes to process a request at the local router (Default is .05 milliseconds): ";
 		std::cin >> processingDelay;
 		std::cout << "Enter the size of the buffer for each router (Default is 10): ";
 		std::cin >> bufferSize;
@@ -48,7 +49,7 @@ int main()
 	//The physical link is equal to: (500 + (router's ID * 1000))
 	for (int i = 0; i <= 15; i++)
 	{
-		Router newNode(i, bandwidth, bufferSize, processingDelay, randomPacketLoss, ((i *1000) + 500));
+		Router newNode(i, bandwidth, bufferSize, processingDelay, randomPacketLoss, ((i * 1000) + 500));
 		newNode.calculateTransDelay(packetSize);
 		mesh.push_back(newNode);
 	}
@@ -66,44 +67,44 @@ int main()
 	mesh[1].updateConnection(mesh[0], 0);
 	mesh[1].updateConnection(mesh[2], 2);
 	mesh[1].updateConnection(mesh[4], 4);
-	mesh[2].updateConnection(mesh[1],1);
-	mesh[2].updateConnection(mesh[3],3);
-	mesh[3].updateConnection(mesh[2],2);
-	mesh[3].updateConnection(mesh[4],4);
-	mesh[3].updateConnection(mesh[13],13);
-	mesh[4].updateConnection(mesh[1],1);
-	mesh[4].updateConnection(mesh[3],3);
-	mesh[4].updateConnection(mesh[5],5);
-	mesh[4].updateConnection(mesh[12],12);
-	mesh[5].updateConnection(mesh[4],4);
-	mesh[5].updateConnection(mesh[10],10);
-	mesh[5].updateConnection(mesh[11],11);
-	mesh[6].updateConnection(mesh[9],9);
-	mesh[6].updateConnection(mesh[10],10);
-	mesh[6].updateConnection(mesh[14],14);
-	mesh[7].updateConnection(mesh[8],8);
-	mesh[7].updateConnection(mesh[9],9);
-	mesh[8].updateConnection(mesh[7],7);
-	mesh[8].updateConnection(mesh[9],9);
-	mesh[8].updateConnection(mesh[15],15);
-	mesh[9].updateConnection(mesh[6],6);
-	mesh[9].updateConnection(mesh[7],7);
-	mesh[9].updateConnection(mesh[8],8);
-	mesh[9].updateConnection(mesh[14],14);
-	mesh[9].updateConnection(mesh[15],15);
-	mesh[10].updateConnection(mesh[5],5);
-	mesh[10].updateConnection(mesh[6],6);
-	mesh[11].updateConnection(mesh[5],5);
-	mesh[11].updateConnection(mesh[12],12);
-	mesh[12].updateConnection(mesh[4],4);
-	mesh[12].updateConnection(mesh[11],11);
-	mesh[13].updateConnection(mesh[3],3);
-	mesh[14].updateConnection(mesh[6],6);
-	mesh[14].updateConnection(mesh[9],9);
-	mesh[14].updateConnection(mesh[15],15);
-	mesh[15].updateConnection(mesh[8],8);
-	mesh[15].updateConnection(mesh[9],9);
-	mesh[15].updateConnection(mesh[14],14);
+	mesh[2].updateConnection(mesh[1], 1);
+	mesh[2].updateConnection(mesh[3], 3);
+	mesh[3].updateConnection(mesh[2], 2);
+	mesh[3].updateConnection(mesh[4], 4);
+	mesh[3].updateConnection(mesh[13], 13);
+	mesh[4].updateConnection(mesh[1], 1);
+	mesh[4].updateConnection(mesh[3], 3);
+	mesh[4].updateConnection(mesh[5], 5);
+	mesh[4].updateConnection(mesh[12], 12);
+	mesh[5].updateConnection(mesh[4], 4);
+	mesh[5].updateConnection(mesh[10], 10);
+	mesh[5].updateConnection(mesh[11], 11);
+	mesh[6].updateConnection(mesh[9], 9);
+	mesh[6].updateConnection(mesh[10], 10);
+	mesh[6].updateConnection(mesh[14], 14);
+	mesh[7].updateConnection(mesh[8], 8);
+	mesh[7].updateConnection(mesh[9], 9);
+	mesh[8].updateConnection(mesh[7], 7);
+	mesh[8].updateConnection(mesh[9], 9);
+	mesh[8].updateConnection(mesh[15], 15);
+	mesh[9].updateConnection(mesh[6], 6);
+	mesh[9].updateConnection(mesh[7], 7);
+	mesh[9].updateConnection(mesh[8], 8);
+	mesh[9].updateConnection(mesh[14], 14);
+	mesh[9].updateConnection(mesh[15], 15);
+	mesh[10].updateConnection(mesh[5], 5);
+	mesh[10].updateConnection(mesh[6], 6);
+	mesh[11].updateConnection(mesh[5], 5);
+	mesh[11].updateConnection(mesh[12], 12);
+	mesh[12].updateConnection(mesh[4], 4);
+	mesh[12].updateConnection(mesh[11], 11);
+	mesh[13].updateConnection(mesh[3], 3);
+	mesh[14].updateConnection(mesh[6], 6);
+	mesh[14].updateConnection(mesh[9], 9);
+	mesh[14].updateConnection(mesh[15], 15);
+	mesh[15].updateConnection(mesh[8], 8);
+	mesh[15].updateConnection(mesh[9], 9);
+	mesh[15].updateConnection(mesh[14], 14);
 
 
 	//Allows users to (slowly) edit single nodes to test further
@@ -138,7 +139,7 @@ int main()
 
 	for (int i = 0; i < mesh.size(); i++)
 	{
-		int connSize = mesh[i].getConnections().size();
+		int connSize = (int)mesh[i].getConnections().size();
 		meshDistances.push_back(std::vector<double>());
 		for (int j = 0; j < connSize; j++)
 		{
@@ -153,12 +154,21 @@ int main()
 		for (int j = 0; j < meshDistances[i].size(); j++)
 		std::cout << meshDistances[i][j] << std::endl;
 		std::cout << "Size: " << meshDistances[i].size() << std::endl;
-	}*/ 
+	}*/
+	while (tempNum < 0 || tempNum > 15)
+	{
+		std::cout << "Let's send a single packet.  Enter a starting router ID (from 0 to 15): ";
+		std::cin >> tempNum;
+	}
+	while (tempNum2 < 0 || tempNum2 > 15)
+	{
+		std::cout << "Now enter a destination router: ";
+		std::cin >> tempNum2;
+	}
 
-	std::cout << "Let's send a single packet.  Enter a starting router ID: ";
-	std::cin >> tempNum;
-	std::cout << "Now enter a destination router: ";
-	std::cin >> tempNum2;
+	//The source and destination routers determine whether a router can be routed around.  We'll update those routers here based on tempNum and tempNum2
+
+
 	std::cout << "Sending packet..." << std::endl;
 	//std::queue<Router> packetPath = calcShortestPath(mesh, tempNum, tempNum2);
 	std::list<int> packetPath = findShortestPath(tempNum, tempNum2, meshDistances, totalDelay); //We'll print this out to show that the basic routing worked
@@ -168,9 +178,9 @@ int main()
 	//Print the packet path of routers
 	//Also, updates the total time that the packet spends inbetween each router
 	//Packet has a chance to be lost based on the packet loss chance
-	while (!packetPath.empty()) 
+	while (!packetPath.empty())
 	{
-		std::cout <<"Router "<< packetPath.front() << std::endl; //Print router
+		std::cout << "Moving to router " << packetPath.front() << std::endl; //Print router
 		while (true)//This is where the losses will be calculated; if the packet loss chance is 1, then this will loop forever.
 		{
 			totalDelay += mesh[packetPathCopy.front()].getProcessingDelay();
@@ -178,13 +188,21 @@ int main()
 			{
 				if (mesh[packetPath.front()].sendAckOrReq(totalDelay)) //Represents an acknowledge
 				{
+					if (packetPath.front() == tempNum2) //If the current router equals the destination router, don't print)
+					{
+						break; //break early so we don't get an out of bounds
+					}
+					std::cout << "Request and acknowledge received between routers adjacent routers" << std::endl;
 					break; //If both transmissions are successful, then we're done and can move on.  Otherwise, we'll need to try again.  Delay time is added each time
 				}
 			}
+			numberOfLosses++; //Indicates that some loss occurred along the way
 		}
 		packetPath.pop_front(); //Pop the front, allowing the next router to be examined
 	}
 	std::cout << "And here is the total time that packet took through the network (in milliseconds): " << totalDelay << std::endl; 
+	std::cout << "There were a total of " << numberOfLosses << " packet losses."  << std::endl;
+	numberOfLosses = 0;
 	std::cout << "Now, let's do the same thing, except this time, some routing buffers can be full." << std::endl;
 	std::cout << "If a packet reaches a full buffer, then it will be lost, requiring it to be re-sent.  Also, some packets may be lost randomly as well." << std::endl;
 	userInput = "";
@@ -252,17 +270,25 @@ int main()
 			totalDelayCopy += mesh[packetPathCopy.front()].getProcessingDelay(); //Add the time taken to process the packet to the total delay
 			if (mesh[packetPathCopy.front()].sendAckOrReq(totalDelayCopy)) //Represents a request
 			{
-				if (mesh[packetPathCopy.front()].sendAckOrReq(totalDelayCopy)) //Represents an acknowledge
+				if (mesh[packetPathCopy.front()].sendAckOrReq(totalDelay)) //Represents an acknowledge
 				{
+					if (packetPathCopy.front() == tempNum2) //If the current router equals the destination router, don't print)
+					{
+						break; //break early so we don't get an out of bounds
+					}
+					std::cout << "Request and acknowledge received between routers adjacent routers" << std::endl;
 					break; //If both transmissions are successful, then we're done and can move on.  Otherwise, we'll need to try again.  Delay time is added each time
 				}
 			}
+			numberOfLosses++;
 		}
 		prevNum = tempNum; //Set the previous router 
 		tempNum = packetPathCopy.front(); //Update tempNum to hold the current router
 		packetPathCopy.pop_front(); //Pop the front and move on to the next one in the list
 	}
 	std::cout << "Packet reached destination, with a delay of " << totalDelayCopy << " milliseconds." << std::endl;
+	std::cout << "There were a total of " << numberOfLosses << " packet losses." << std::endl;
+	std::cout << "Enter any key to close the program" << std::endl;
 	std::cin >> userInput;
 	return 0;
 }
@@ -273,9 +299,9 @@ int main()
 //Does NOT account for queue processing, loss, or overloaded buffers.  Those are dealt with when the path is being executed
 //Input: The mesh network, a starting node, and a destination node
 //Output: A list outlining the shortest path from A to B
-std::list<int> findShortestPath(int startID, int dest, std::vector<std::vector<double>> adj, double& time) 
+std::list<int> findShortestPath(int startID, int dest, std::vector< std::vector<double> > adj, double& time) 
 {
-	int adjSize = adj.size();
+	int adjSize = (int) adj.size();
 	int map[16]; //Will store the path used to get the shortest distance  I kept getting some weird memory error with visual studio when using a dynamically allocated array, so we'll use this instead
 	std::vector<double> dist(adjSize);
 	std::vector<bool> vis(adjSize);
