@@ -14,7 +14,7 @@ int main()
 	int packetSize = 512;  //Size of packets to be used during the simulation
 	int bufferSize = 10; //How many packets a node can hold at once.  This is a small number for observation purporses
 	int tempNum = -1;  //To be used with input
-	int tempNum2 = -1; //To be used with input.  I know I could resuse, and I'll clean up later
+	int tempNum2 = -1; //To be used with input
 	double bandwidth = 1500000;  //Bandwidth over the network
 	double randomPacketLoss = .05;  //Chance that a packet may be randomly lost over the network
 	double processingDelay = .05;  //Time it takes to process a request at each router
@@ -61,7 +61,7 @@ int main()
 			mesh[i].addConnection(nullRouter);  //Adds 16 empty connections to the router.  These will be updated and used in the adjacency matrix
 		}
 	}
-	//Assigns connections for the nodes.  Yes this is messy and no I dont care right now
+	//Assigns connections for the nodes. 
 	//These connections are updated, such that every vector will still have 16 connections, although these are not all utilized
 	mesh[0].updateConnection(mesh[1], 1);
 	mesh[1].updateConnection(mesh[0], 0);
@@ -167,6 +167,10 @@ int main()
 	}
 
 	//The source and destination routers determine whether a router can be routed around.  We'll update those routers here based on tempNum and tempNum2
+	//I'll admit that this is very limiting.  It should work for the simulation, but it is not perfect at this moment
+	//The point is, that the algorithm can reroute, but the limited mesh network we are currently using makes this difficult
+	//For a larger mesh network, then it would be much easier to route around
+	//I hope it is still sufficient to show the dynamic aspect of the algorithm
 	if (tempNum <= 3 || tempNum == 13) //If the source is on the left side of the mesh
 	{
 		mesh[8].setRouteAround(true); //then we can route around these routers
