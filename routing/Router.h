@@ -10,7 +10,7 @@
 class Router{
 
 private:
-	int routerID = -1;	//The identification number for this router; when the mesh is built, no two nodes should share this number
+	int routerID;	//The identification number for this router; when the mesh is built, no two nodes should share this number
 	std::queue<Packet> routBuffer;  //Represents how large this router's buffer is
 	std::vector<Router> connections;  //List of other routers this one is connected to
 	int bufferSize;		//Size of this buffer
@@ -20,7 +20,7 @@ private:
 	double propagationSpeed;  //Propagation speed (in meters per millisecond)  Default: 2e8 m/s
 	double processingDelay;  //Time it takes to process where to send the packet (in milliseconds) Default: 10ms
 	double transmissionDelay;  //Time it takes to transmit packet data(packet length / link bandwidth) (in milliseconds) Default:0s, although this is calculated later
-	double lossChance = 0;  //This chance is rolled every time a packet is sent or arrives at another router.  If the roll suceeds, then the packet is lost and must be retransmitted
+	double lossChance;  //This chance is rolled every time a packet is sent or arrives at another router.  If the roll suceeds, then the packet is lost and must be retransmitted
 	bool isFull;
 	bool canRouteAround; //Determines whether a router can be routed around, or if it acts as a bridge.  If it can't be routed around, then the program must go through it
 

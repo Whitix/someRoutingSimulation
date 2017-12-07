@@ -167,7 +167,18 @@ int main()
 	}
 
 	//The source and destination routers determine whether a router can be routed around.  We'll update those routers here based on tempNum and tempNum2
-
+	if (tempNum <= 3 || tempNum == 13) //If the source is on the left side of the mesh
+	{
+		mesh[8].setRouteAround(true); //then we can route around these routers
+		mesh[9].setRouteAround(true);
+		mesh[14].setRouteAround(true);
+		mesh[15].setRouteAround(true);
+	}
+	if ((tempNum <= 9 && tempNum >= 6) || (tempNum == 14) || (tempNum == 15)) //If the source is on the right side of the mesh
+	{
+		mesh[2].setRouteAround(true); //then we can route around these routers
+		mesh[11].setRouteAround(true);
+	}
 
 	std::cout << "Sending packet..." << std::endl;
 	//std::queue<Router> packetPath = calcShortestPath(mesh, tempNum, tempNum2);
@@ -225,12 +236,12 @@ int main()
 	{
 		std::cout << "Moving to router " << packetPathCopy.front() << std::endl;
 		if (mesh[packetPathCopy.front()].isBufferFull()) //Checks to see if the router along the path is full
-		{
-			std::cout << "Router " << packetPathCopy.front() << " is full.  Rerouting around it by going to router " << prevNum << std::endl;
+		{		
 			//If the router is full, then we'll route around it. To do this, we'll remove it as a connection from its adjacent routers.  Then, we'll try to go around it.
 			//If a router is a bridge, then it may not be possible to go around.  In this case, we'll just need to wait for the buffer to not be full
-			try
+			if(mesh[packetPathCopy.front()].canGoAround()) //If we can go around, reroute
 			{
+				std::cout << "Router " << packetPathCopy.front() << " is full.  Rerouting around it by going to router " << prevNum << std::endl;
 				int holder = packetPathCopy.front(); //This variable will hold the next router temporarily, so that it may be removed and re-added
 				mesh[tempNum].removeConnection(holder); //The current router, signified by tempNum, removes the next router in the path from its connections
 
@@ -258,8 +269,9 @@ int main()
 					meshDistances[i].erase((meshDistances[i].begin() + holder + 1));
 				}
 			}
-			catch (const std::out_of_range)  //An out of range exception signifies that a new path could not be found.  In this case, we'll just wait for the router instead
+			else
 			{
+				std::cout << "Router " << packetPathCopy.front() << " is full." << std::endl;
 				std::cout << "Could not reroute packet.  Waiting for buffer instead." << std::endl;
 				totalDelayCopy += (mesh[packetPathCopy.front()].getBufferSize() * mesh[packetPathCopy.front()].getProcessingDelay()); 
 				//The delay here is the buffer size of the next router multiplied by the time it takes to process at that router

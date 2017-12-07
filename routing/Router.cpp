@@ -14,6 +14,7 @@ Router::Router()
 	propagationSpeed = 200000000000;
 	isFull = true;
 	transmissionDelay = 0;
+	lossChance = 1;
 	canRouteAround = false;
 }
 
